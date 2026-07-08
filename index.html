@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CHECO / มคอ.2 Dashboard</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e5e7eb;
+      --blue: #1f6feb;
+      --green: #16803c;
+      --amber: #b7791f;
+      --red: #b42318;
+      --purple: #6f42c1;
+      --shadow: 0 10px 25px rgba(16, 24, 40, 0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Thai", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 270px);
+    }
+    .wrap { max-width: 1440px; margin: 0 auto; padding: 28px; }
+    header { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 28px; line-height: 1.2; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 14px; font-size: 18px; }
+    .subtitle { margin-top: 8px; color: var(--muted); font-size: 14px; max-width: 900px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #c7d7fe; color: #1849a9; background: #eff4ff; border-radius: 999px; padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+    .top-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 12px;
+      background: rgba(255,255,255,0.84);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    select, input { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 14px; background: #fff; color: var(--ink); }
+    .btn-row { display: flex; gap: 8px; align-items: end; }
+    button { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; cursor: pointer; color: var(--ink); font-weight: 650; white-space: nowrap; }
+    button:hover { background: #f8fafc; }
+    button.primary { border-color: #b2ccff; background: #eff4ff; color: #1849a9; }
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .status.ok { border-color: #abefc6; color: #067647; background: #f6fef9; }
+    .status.warn { border-color: #fedf89; color: #93370d; background: #fffcf5; }
+    .status.error { border-color: #fecdca; color: #b42318; background: #fffbfa; }
+    .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
+    .card, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card { padding: 18px; min-height: 126px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card .label { color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .card .value { font-size: 34px; font-weight: 760; letter-spacing: -0.03em; margin-top: 8px; }
+    .card .note { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .card.success .value { color: var(--green); }
+    .card.pending .value { color: var(--red); }
+    .card.minor .value { color: var(--purple); }
+    .card.rate .value { color: var(--blue); }
+    .grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; margin-bottom: 18px; }
+    .panel { padding: 18px; overflow: hidden; }
+    .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+    .bar-row { display: grid; grid-template-columns: 70px 1fr 96px; gap: 10px; align-items: center; font-size: 13px; }
+    .bar-track { height: 28px; background: #edf2f7; border-radius: 999px; overflow: hidden; display: flex; }
+    .seg { height: 100%; min-width: 0; }
+    .seg.success { background: var(--green); }
+    .seg.pending { background: var(--red); }
+    .seg.minor { background: var(--purple); opacity: .84; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 12px; margin-top: 12px; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+    .dot.success { background: var(--green); } .dot.pending { background: var(--red); } .dot.minor { background: var(--purple); } .dot.blue { background: var(--blue); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px 8px; vertical-align: top; text-align: left; }
+    th { color: var(--muted); font-weight: 650; background: #fbfcfe; position: sticky; top: 0; z-index: 1; }
+    td.num, th.num { text-align: right; white-space: nowrap; }
+    .scroll { max-height: 440px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+    .course { font-weight: 650; line-height: 1.35; }
+    .muted { color: var(--muted); }
+    .pill { display: inline-flex; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 650; white-space: nowrap; }
+    .pill.success { background: #dcfae6; color: #067647; }
+    .pill.pending { background: #fee4e2; color: #b42318; }
+    .pill.minor { background: #f4ebff; color: #6941c6; }
+    .pill.neutral { background: #eef2f6; color: #344054; }
+    .full { grid-column: 1 / -1; }
+    .note-box { border-left: 4px solid var(--blue); background: #f5f8ff; padding: 12px 14px; border-radius: 12px; color: #344054; font-size: 13px; margin-bottom: 14px; }
+    .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .small-chart-row { display: grid; grid-template-columns: 1fr 80px; gap: 10px; align-items: center; margin: 8px 0; }
+    .small-track { height: 11px; background: #edf2f7; border-radius: 999px; overflow: hidden; }
+    .small-fill { height: 100%; background: var(--blue); border-radius: 999px; }
+    .footer { color: var(--muted); font-size: 12px; margin: 18px 2px 0; }
+    .empty { color: var(--muted); padding: 18px; border: 1px dashed var(--line); border-radius: 14px; background: #fbfcfe; }
+    @media (max-width: 1180px) {
+      .controls { grid-template-columns: repeat(2, 1fr); position: static; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .grid, .mini-grid { grid-template-columns: 1fr; }
+      .top-actions { align-items: flex-start; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 16px; }
+      header { flex-direction: column; }
+      .controls, .kpis { grid-template-columns: 1fr; }
+      .card .value { font-size: 30px; }
+      .bar-row { grid-template-columns: 52px 1fr 70px; }
+      .status { flex-direction: column; align-items: flex-start; }
+      .btn-row { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Dashboard ติดตาม CHECO / มคอ.2</h1>
+        <div class="subtitle">จัดกลุ่มหลักตาม <b>เกณฑ์ประเมิน</b> ส่วน <b>วันที่รับทราบ</b> ใช้ตัดสินสถานะรับทราบแล้วหรืออยู่ระหว่างการพิจารณาเท่านั้น</div>
+      </div>
+      <div class="top-actions">
+        <div class="badge">แหล่งข้อมูล: Google Sheet ผ่าน Apps Script</div>
+        <div class="btn-row">
+          <button class="primary" id="refreshBtn" type="button">Refresh data</button>
+          <button id="exportBtn" type="button">Export CSV</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="loadStatus" class="status warn">กำลังโหลดข้อมูลจาก Google Sheet…</div>
+
+    <section class="controls">
+      <div><label>เกณฑ์ประเมิน</label><select id="criteriaFilter"></select></div>
+      <div><label>คณะ / หน่วยงาน</label><select id="facultyFilter"></select></div>
+      <div><label>วิทยาเขต</label><select id="campusFilter"></select></div>
+      <div><label>ระดับการศึกษา</label><select id="levelFilter"></select></div>
+      <div><label>สถานะ</label><select id="statusFilter"></select></div>
+      <div><label>ค้นหาหลักสูตร / รหัส</label><input id="searchBox" placeholder="พิมพ์เพื่อค้นหา" /></div>
+    </section>
+
+    <section class="kpis">
+      <div class="card success"><div><div class="label">หลักสูตรส่ง มคอ.2 สำเร็จ</div><div class="value" id="kpiSuccess">0</div></div><div class="note">นับ unique หลักสูตร/วิทยาเขต</div></div>
+      <div class="card pending"><div><div class="label">หลักสูตรอยู่ระหว่างพิจารณา</div><div class="value" id="kpiPending">0</div></div><div class="note">นับจาก มคอ.2 ที่ยังไม่มีวันที่รับทราบ</div></div>
+      <div class="card rate"><div><div class="label">อัตราสำเร็จของ มคอ.2</div><div class="value" id="kpiRate">0%</div></div><div class="note">สำเร็จ / มคอ.2 ทั้งหมด</div></div>
+      <div class="card minor"><div><div class="label">รายการปรับปรุงเล็กน้อย</div><div class="value" id="kpiMinorRows">0</div></div><div class="note">นับเป็นจำนวนครั้ง</div></div>
+      <div class="card"><div><div class="label">หลักสูตรที่เคยปรับปรุงเล็กน้อย</div><div class="value" id="kpiMinorCourses">0</div></div><div class="note">นับ unique หลักสูตร/วิทยาเขต</div></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>ภาพรวมตามเกณฑ์ประเมิน</h2>
+        <div id="criteriaChart" class="bar-chart"></div>
+        <div class="legend"><span><i class="dot success"></i>มคอ.2 สำเร็จ</span><span><i class="dot pending"></i>อยู่ระหว่างพิจารณา</span><span><i class="dot minor"></i>ปรับปรุงเล็กน้อย</span></div>
+      </div>
+      <div class="panel">
+        <h2>ประเภทการดำเนินการ</h2>
+        <div id="operationChart"></div>
+      </div>
+    </section>
+
+    <section class="mini-grid">
+      <div class="panel">
+        <h2>สรุปตามเกณฑ์ประเมิน</h2>
+        <div class="scroll" style="max-height:300px"><table id="criteriaTable"></table></div>
+      </div>
+      <div class="panel">
+        <h2>สรุปตามระดับการศึกษา</h2>
+        <div id="levelChart"></div>
+      </div>
+      <div class="panel">
+        <h2>สถานะตามคณะ</h2>
+        <div class="scroll" style="max-height:300px"><table id="facultyTable"></table></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>หลักสูตรที่มีการปรับปรุงเล็กน้อยมากที่สุด</h2>
+        <div class="scroll"><table id="minorTable"></table></div>
+      </div>
+      <div class="panel">
+        <h2>มคอ.2 ที่ยังอยู่ระหว่างการพิจารณา</h2>
+        <div class="scroll"><table id="pendingTable"></table></div>
+      </div>
+    </section>
+
+    <section class="panel full">
+      <h2>รายละเอียดรายหลักสูตร</h2>
+      <div class="note-box">Key ที่ใช้รวมหลักสูตร: <b>รหัสหลักสูตร + ชื่อหลักสูตร + วิทยาเขต</b>. งาน “ปรับปรุงเล็กน้อย ครั้งที่ …” ไม่นับเป็นส่ง มคอ.2 สำเร็จ แต่แยกเป็นจำนวนครั้งของการปรับแก้</div>
+      <div class="scroll" style="max-height:620px"><table id="detailTable"></table></div>
+    </section>
+
+    <div class="footer">Dashboard นี้อ่านข้อมูลสดจาก Google Sheet ผ่าน Apps Script endpoint. หากแก้ข้อมูลใน Sheet ให้กด Refresh data หรือ reload หน้าเว็บ</div>
+  </div>
+
+<script>
+'use strict';
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbyhrRlTbBZMvv398xXG1QCothkee4G-zPvS4Ma6BUi0_sxfZuH4g1fxygmBAu7GtLWg/exec';
+const TQF2_OPS = new Set(['หลักสูตรใหม่','ปรับปรุงตามกำหนดรอบปรับปรุง','ปรับปรุงแบบแยก','ปรับปรุงแบบรวม']);
+const PENDING_TEXT = 'อยู่ระหว่างการพิจารณา';
+
+let records = [];
+let filteredRecords = [];
+let lastLoadedAt = null;
+
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => new Intl.NumberFormat('th-TH').format(Number(n) || 0);
+const pct = (num, den) => den ? Math.round((num / den) * 100) + '%' : '0%';
+const esc = (s) => String(s ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+const clean = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+const unique = (arr) => [...new Set(arr.filter(v => v !== undefined && v !== null && String(v).trim() !== ''))];
+const short = (s, max=92) => String(s || '').length > max ? String(s).slice(0, max - 1) + '…' : String(s || '');
+const courseKey = (r) => r.courseKey;
+
+function setStatus(type, text) {
+  const el = $('loadStatus');
+  el.className = `status ${type}`;
+  el.innerHTML = text;
+}
+
+function getField(row, names) {
+  for (const name of names) {
+    if (row && Object.prototype.hasOwnProperty.call(row, name) && row[name] !== undefined && row[name] !== null && row[name] !== '') return row[name];
+  }
+  return '';
+}
+
+function normalizeDateForDisplay(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (!s) return '';
+    if (s.includes(PENDING_TEXT)) return PENDING_TEXT;
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
+      const y = Number(iso[1]);
+      const m = iso[2];
+      const d = iso[3];
+      const be = y < 2400 ? y + 543 : y;
+      return `${d}/${m}/${be}`;
+    }
+    return s;
+  }
+  if (typeof value === 'number') {
+    // Google Sheet may return Excel serial date. Treat only plausible date serials as dates.
+    if (value > 20000 && value < 80000) {
+      const utcDays = Math.floor(value - 25569);
+      const ms = utcDays * 86400 * 1000;
+      const d = new Date(ms);
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const year = d.getUTCFullYear() + 543;
+      return `${day}/${month}/${year}`;
+    }
+    return String(value);
+  }
+  if (value instanceof Date) {
+    const d = value;
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()+543}`;
+  }
+  return String(value);
+}
+
+function isPendingAck(value) {
+  const s = String(value ?? '').trim();
+  return !s || s.includes(PENDING_TEXT);
+}
+
+function extractRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.data)) return payload.data;
+  if (payload && Array.isArray(payload.rows)) return payload.rows;
+  if (payload && payload.result && Array.isArray(payload.result.data)) return payload.result.data;
+  throw new Error('API response ไม่พบ array ข้อมูล เช่น data หรือ rows');
+}
+
+function normalizeRows(rows) {
+  return rows.map((row, idx) => {
+    const unit = clean(getField(row, ['หน่วยงาน', 'unit']));
+    const faculty = clean(getField(row, ['คณะ', 'faculty'])) || unit || '-';
+    const campus = clean(getField(row, ['วิทยาเขต', 'campus'])) || '-';
+    const trackingCode = clean(getField(row, ['รหัสติดตาม', 'trackingCode', 'tracking_code']));
+    const courseCode = clean(getField(row, ['รหัสหลักสูตร', 'courseCode', 'course_code'])) || trackingCode;
+    const courseName = clean(getField(row, ['ชื่อหลักสูตร', 'courseName', 'course_name']));
+    const level = clean(getField(row, ['ระดับการศึกษา', 'level'])) || '-';
+    const ackRaw = getField(row, ['วันที่รับทราบ', 'ackDate', 'ack_date']);
+    const ackDate = normalizeDateForDisplay(ackRaw);
+    const operation = clean(getField(row, ['ประเภทการดำเนินการ', 'operation']));
+    const criteria = clean(getField(row, ['เกณฑ์ประเมิน', 'criteria'])) || 'ไม่ระบุ';
+    const isMinor = operation.startsWith('ปรับปรุงเล็กน้อย');
+    const isTqf2 = TQF2_OPS.has(operation);
+    const ackStatus = isPendingAck(ackRaw) ? 'pending' : 'success';
+    const key = [courseCode || trackingCode || `row-${idx+1}`, courseName || '-', campus || '-'].join('|');
+
+    return {
+      row: idx + 2,
+      unit,
+      faculty,
+      campus,
+      trackingCode,
+      courseCode,
+      courseName,
+      level,
+      ackDate,
+      ackStatus,
+      operation,
+      criteria,
+      isTqf2,
+      isMinor,
+      courseKey: key,
+      raw: row
+    };
+  }).filter(r => r.courseName || r.courseCode || r.trackingCode || r.operation);
+}
+
+async function loadData() {
+  setStatus('warn', 'กำลังโหลดข้อมูลจาก Google Sheet…');
+  $('refreshBtn').disabled = true;
+  try {
+    const url = `${API_URL}${API_URL.includes('?') ? '&' : '?'}_=${Date.now()}`;
+    const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    const rows = extractRows(payload);
+    records = normalizeRows(rows);
+    lastLoadedAt = new Date();
+    setupFilters();
+    render();
+    setStatus('ok', `โหลดข้อมูลสำเร็จ ${fmt(records.length)} รายการ · อัปเดตล่าสุด ${lastLoadedAt.toLocaleString('th-TH')}`);
+  } catch (err) {
+    records = [];
+    setupFilters();
+    render();
+    setStatus('error', `โหลดข้อมูลไม่สำเร็จ: ${esc(err.message)}<br><span class="muted">ตรวจ Apps Script deployment ว่าตั้งค่า Who has access = Anyone และ response เป็น JSON รูปแบบ { status, count, data }</span>`);
+  } finally {
+    $('refreshBtn').disabled = false;
+  }
+}
+
+function populateSelect(id, values, allLabel) {
+  const el = $(id);
+  const current = el.value;
+  el.innerHTML = `<option value="">${allLabel}</option>` + values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if ([...el.options].some(o => o.value === current)) el.value = current;
+}
+
+function setupFilters() {
+  populateSelect('criteriaFilter', unique(records.map(r => r.criteria)).sort((a,b)=>(parseInt(a)||9999)-(parseInt(b)||9999)), 'ทุกเกณฑ์ประเมิน');
+  populateSelect('facultyFilter', unique(records.map(r => r.faculty)).sort(), 'ทุกคณะ');
+  populateSelect('campusFilter', unique(records.map(r => r.campus)).sort(), 'ทุกวิทยาเขต');
+  populateSelect('levelFilter', unique(records.map(r => r.level)).sort(), 'ทุกระดับ');
+  populateSelect('statusFilter', ['ส่ง มคอ.2 สำเร็จ', 'อยู่ระหว่างพิจารณา', 'ปรับปรุงเล็กน้อย'], 'ทุกสถานะ');
+}
+
+function getFiltered() {
+  const c = $('criteriaFilter').value;
+  const f = $('facultyFilter').value;
+  const campus = $('campusFilter').value;
+  const level = $('levelFilter').value;
+  const status = $('statusFilter').value;
+  const q = $('searchBox').value.trim().toLowerCase();
+  return records.filter(r => {
+    const statusOk = !status ||
+      (status === 'ส่ง มคอ.2 สำเร็จ' && r.isTqf2 && r.ackStatus === 'success') ||
+      (status === 'อยู่ระหว่างพิจารณา' && r.isTqf2 && r.ackStatus === 'pending') ||
+      (status === 'ปรับปรุงเล็กน้อย' && r.isMinor);
+    const queryText = `${r.courseCode} ${r.trackingCode} ${r.courseName} ${r.faculty} ${r.campus} ${r.operation}`.toLowerCase();
+    return (!c || r.criteria === c) &&
+      (!f || r.faculty === f) &&
+      (!campus || r.campus === campus) &&
+      (!level || r.level === level) &&
+      statusOk &&
+      (!q || queryText.includes(q));
+  });
+}
+
+function groupBy(arr, keyFn) {
+  const map = new Map();
+  arr.forEach(item => {
+    const key = keyFn(item);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+  });
+  return map;
+}
+
+function uniqueCount(arr, keyFn) {
+  return new Set(arr.map(keyFn)).size;
+}
+
+function summarize(arr) {
+  const tqf2 = arr.filter(r => r.isTqf2);
+  const success = tqf2.filter(r => r.ackStatus === 'success');
+  const pending = tqf2.filter(r => r.ackStatus === 'pending');
+  const minor = arr.filter(r => r.isMinor);
+  return {
+    totalRows: arr.length,
+    uniqueCourses: uniqueCount(arr, courseKey),
+    tqf2Rows: tqf2.length,
+    tqf2SuccessRows: success.length,
+    tqf2PendingRows: pending.length,
+    tqf2SuccessCourses: uniqueCount(success, courseKey),
+    tqf2PendingCourses: uniqueCount(pending, courseKey),
+    minorRows: minor.length,
+    minorCourses: uniqueCount(minor, courseKey)
+  };
+}
+
+function renderKpis(arr) {
+  const s = summarize(arr);
+  $('kpiSuccess').textContent = fmt(s.tqf2SuccessCourses);
+  $('kpiPending').textContent = fmt(s.tqf2PendingCourses);
+  $('kpiRate').textContent = pct(s.tqf2SuccessCourses, s.tqf2SuccessCourses + s.tqf2PendingCourses);
+  $('kpiMinorRows').textContent = fmt(s.minorRows);
+  $('kpiMinorCourses').textContent = fmt(s.minorCourses);
+}
+
+function renderCriteriaChart(arr) {
+  const groups = [...groupBy(arr, r => r.criteria).entries()].sort((a,b)=>(parseInt(a[0])||9999)-(parseInt(b[0])||9999));
+  if (!groups.length) {
+    $('criteriaChart').innerHTML = '<div class="empty">ไม่มีข้อมูลตามเงื่อนไขที่เลือก</div>';
+    return;
+  }
+  const summaries = groups.map(([criteria, rows]) => ({ criteria, ...summarize(rows) }));
+  const max = Math.max(...summaries.map(s => s.tqf2SuccessCourses + s.tqf2PendingCourses + s.minorRows), 1);
+  $('criteriaChart').innerHTML = summaries.map(s => {
+    const total = s.tqf2SuccessCourses + s.tqf2PendingCourses + s.minorRows;
+    const wSuccess = (s.tqf2SuccessCourses / max) * 100;
+    const wPending = (s.tqf2PendingCourses / max) * 100;
+    const wMinor = (s.minorRows / max) * 100;
+    return `<div class="bar-row">
+      <div><b>${esc(s.criteria)}</b></div>
+      <div class="bar-track" title="รวม ${fmt(total)}">
+        <div class="seg success" style="width:${wSuccess}%"></div>
+        <div class="seg pending" style="width:${wPending}%"></div>
+        <div class="seg minor" style="width:${wMinor}%"></div>
+      </div>
+      <div class="num">${fmt(total)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderOperationChart(arr) {
+  const groups = [...groupBy(arr, r => r.operation || 'ไม่ระบุ').entries()]
+    .map(([operation, rows]) => ({ operation, count: rows.length }))
+    .sort((a,b) => b.count - a.count);
+  const max = Math.max(...groups.map(g => g.count), 1);
+  $('operationChart').innerHTML = groups.length ? groups.map(g => `
+    <div class="small-chart-row">
+      <div>
+        <div style="font-size:13px">${esc(g.operation)}</div>
+        <div class="small-track"><div class="small-fill" style="width:${(g.count/max)*100}%"></div></div>
+      </div>
+      <div class="num">${fmt(g.count)}</div>
+    </div>
+  `).join('') : '<div class="empty">ไม่มีข้อมูล</div>';
+}
+
+function renderCriteriaTable(arr) {
+  const rows = [...groupBy(arr, r => r.criteria).entries()]
+    .map(([criteria, rs]) => ({ criteria, ...summarize(rs) }))
+    .sort((a,b)=>(parseInt(a.criteria)||9999)-(parseInt(b.criteria)||9999));
+  $('criteriaTable').innerHTML = `<thead><tr>
+    <th>เกณฑ์</th><th class="num">มคอ.2 สำเร็จ</th><th class="num">ค้าง</th><th class="num">ปรับเล็กน้อย</th><th class="num">รวม</th>
+  </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
+    <td><b>${esc(r.criteria)}</b></td>
+    <td class="num">${fmt(r.tqf2SuccessCourses)}</td>
+    <td class="num">${fmt(r.tqf2PendingCourses)}</td>
+    <td class="num">${fmt(r.minorRows)}</td>
+    <td class="num">${fmt(r.totalRows)}</td>
+  </tr>`).join('') : '<tr><td colspan="5" class="muted">ไม่มีข้อมูล</td></tr>') + '</tbody>';
+}
+
+function renderLevelChart(arr) {
+  const groups = [...groupBy(arr, r => r.level || 'ไม่ระบุ').entries()]
+    .map(([level, rows]) => ({ level, ...summarize(rows) }))
+    .sort((a,b) => b.totalRows - a.totalRows);
+  const max = Math.max(...groups.map(g => g.totalRows), 1);
+  $('levelChart').innerHTML = groups.length ? groups.map(g => `
+    <div class="small-chart-row">
+      <div>
+        <div style="font-size:13px"><b>${esc(g.level)}</b> <span class="muted">สำเร็จ ${fmt(g.tqf2SuccessCourses)} · ค้าง ${fmt(g.tqf2PendingCourses)}</span></div>
+        <div class="small-track"><div class="small-fill" style="width:${(g.totalRows/max)*100}%"></div></div>
+      </div>
+      <div class="num">${fmt(g.totalRows)}</div>
+    </div>
+  `).join('') : '<div class="empty">ไม่มีข้อมูล</div>';
+}
+
+function renderFacultyTable(arr) {
+  const rows = [...groupBy(arr, r => r.faculty || 'ไม่ระบุ').entries()]
+    .map(([faculty, rs]) => ({ faculty, ...summarize(rs) }))
+    .sort((a,b) => b.tqf2PendingCourses - a.tqf2PendingCourses || b.tqf2SuccessCourses - a.tqf2SuccessCourses || a.faculty.localeCompare(b.faculty, 'th'));
+  $('facultyTable').innerHTML = `<thead><tr>
+    <th>คณะ</th><th class="num">สำเร็จ</th><th class="num">ค้าง</th><th class="num">ปรับ</th>
+  </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
+    <td>${esc(r.faculty)}</td>
+    <td class="num">${fmt(r.tqf2SuccessCourses)}</td>
+    <td class="num">${fmt(r.tqf2PendingCourses)}</td>
+    <td class="num">${fmt(r.minorRows)}</td>
+  </tr>`).join('') : '<tr><td colspan="4" class="muted">ไม่มีข้อมูล</td></tr>') + '</tbody>';
+}
+
+function renderMinorTable(arr) {
+  const minor = arr.filter(r => r.isMinor);
+  const rows = [...groupBy(minor, courseKey).entries()].map(([key, rs]) => {
+    const first = rs[0];
+    const criteriaSet = unique(rs.map(r => r.criteria)).join(', ');
+    return {
+      courseName: first.courseName,
+      courseCode: first.courseCode,
+      campus: first.campus,
+      faculty: first.faculty,
+      criteria: criteriaSet,
+      count: rs.length,
+      operations: unique(rs.map(r => r.operation)).join(' / ')
+    };
+  }).sort((a,b) => b.count - a.count || a.courseName.localeCompare(b.courseName, 'th')).slice(0, 40);
+
+  $('minorTable').innerHTML = `<thead><tr>
+    <th>หลักสูตร</th><th>คณะ / วิทยาเขต</th><th>เกณฑ์</th><th class="num">จำนวนครั้ง</th>
+  </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
+    <td><div class="course">${esc(r.courseName)}</div><div class="muted">${esc(r.courseCode)}</div><div><span class="pill minor">${esc(r.operations)}</span></div></td>
+    <td>${esc(r.faculty)}<br><span class="muted">${esc(r.campus)}</span></td>
+    <td>${esc(r.criteria)}</td>
+    <td class="num"><b>${fmt(r.count)}</b></td>
+  </tr>`).join('') : '<tr><td colspan="4" class="muted">ไม่มีรายการปรับปรุงเล็กน้อย</td></tr>') + '</tbody>';
+}
+
+function renderPendingTable(arr) {
+  const rows = arr.filter(r => r.isTqf2 && r.ackStatus === 'pending')
+    .sort((a,b) => (a.criteria || '').localeCompare(b.criteria || '', 'th') || a.faculty.localeCompare(b.faculty, 'th') || a.courseName.localeCompare(b.courseName, 'th'));
+  $('pendingTable').innerHTML = `<thead><tr>
+    <th>หลักสูตร</th><th>คณะ / วิทยาเขต</th><th>เกณฑ์</th><th>ประเภท</th>
+  </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
+    <td><div class="course">${esc(r.courseName)}</div><div class="muted">${esc(r.courseCode)}</div></td>
+    <td>${esc(r.faculty)}<br><span class="muted">${esc(r.campus)}</span></td>
+    <td>${esc(r.criteria)}</td>
+    <td><span class="pill pending">${esc(r.operation)}</span></td>
+  </tr>`).join('') : '<tr><td colspan="4" class="muted">ไม่มีรายการอยู่ระหว่างพิจารณา</td></tr>') + '</tbody>';
+}
+
+function renderDetailTable(arr) {
+  const rows = arr.slice().sort((a,b) =>
+    (parseInt(a.criteria)||9999) - (parseInt(b.criteria)||9999) ||
+    a.faculty.localeCompare(b.faculty, 'th') ||
+    a.courseName.localeCompare(b.courseName, 'th')
+  );
+  $('detailTable').innerHTML = `<thead><tr>
+    <th>เกณฑ์</th><th>หลักสูตร</th><th>คณะ</th><th>วิทยาเขต</th><th>ระดับ</th><th>ประเภท</th><th>วันที่รับทราบ</th><th>สถานะ</th>
+  </tr></thead><tbody>` + (rows.length ? rows.map(r => {
+    const statusPill = r.isMinor ? '<span class="pill minor">ปรับปรุงเล็กน้อย</span>' :
+      (r.isTqf2 && r.ackStatus === 'success' ? '<span class="pill success">มคอ.2 สำเร็จ</span>' :
+      (r.isTqf2 && r.ackStatus === 'pending' ? '<span class="pill pending">อยู่ระหว่างพิจารณา</span>' : '<span class="pill neutral">อื่น ๆ</span>'));
+    return `<tr>
+      <td>${esc(r.criteria)}</td>
+      <td><div class="course">${esc(short(r.courseName, 110))}</div><div class="muted">${esc(r.courseCode || r.trackingCode)}</div></td>
+      <td>${esc(r.faculty)}</td>
+      <td>${esc(r.campus)}</td>
+      <td>${esc(r.level)}</td>
+      <td>${esc(r.operation)}</td>
+      <td>${esc(r.ackDate)}</td>
+      <td>${statusPill}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" class="muted">ไม่มีข้อมูลตามเงื่อนไขที่เลือก</td></tr>') + '</tbody>';
+}
+
+function render() {
+  filteredRecords = getFiltered();
+  renderKpis(filteredRecords);
+  renderCriteriaChart(filteredRecords);
+  renderOperationChart(filteredRecords);
+  renderCriteriaTable(filteredRecords);
+  renderLevelChart(filteredRecords);
+  renderFacultyTable(filteredRecords);
+  renderMinorTable(filteredRecords);
+  renderPendingTable(filteredRecords);
+  renderDetailTable(filteredRecords);
+}
+
+function exportCsv() {
+  const headers = ['เกณฑ์ประเมิน','รหัสหลักสูตร','รหัสติดตาม','ชื่อหลักสูตร','คณะ','วิทยาเขต','ระดับการศึกษา','ประเภทการดำเนินการ','วันที่รับทราบ','สถานะ'];
+  const rows = filteredRecords.map(r => [
+    r.criteria, r.courseCode, r.trackingCode, r.courseName, r.faculty, r.campus, r.level, r.operation, r.ackDate,
+    r.isMinor ? 'ปรับปรุงเล็กน้อย' : (r.isTqf2 && r.ackStatus === 'success' ? 'มคอ.2 สำเร็จ' : (r.isTqf2 && r.ackStatus === 'pending' ? 'อยู่ระหว่างพิจารณา' : 'อื่น ๆ'))
+  ]);
+  const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `checo-dashboard-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function init() {
+  ['criteriaFilter','facultyFilter','campusFilter','levelFilter','statusFilter'].forEach(id => $(id).addEventListener('change', render));
+  $('searchBox').addEventListener('input', render);
+  $('refreshBtn').addEventListener('click', loadData);
+  $('exportBtn').addEventListener('click', exportCsv);
+  setupFilters();
+  render();
+  loadData();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
