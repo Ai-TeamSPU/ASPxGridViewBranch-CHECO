@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CHECO / มคอ.2 Dashboard</title>
+  <title>รายงานสถานะการรับทราบหลักสูตร</title>
   <style>
     :root {
       --bg: #f5f7fb;
@@ -35,7 +35,7 @@
     .top-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
     .controls {
       display: grid;
-      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      grid-template-columns: repeat(7, minmax(140px, 1fr));
       gap: 12px;
       background: rgba(255,255,255,0.84);
       backdrop-filter: blur(8px);
@@ -104,6 +104,19 @@
     .pill.pending { background: #fee4e2; color: #b42318; }
     .pill.minor { background: #f4ebff; color: #6941c6; }
     .pill.neutral { background: #eef2f6; color: #344054; }
+    .minor-history { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+    .minor-entry {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border: 1px solid #e4d7ff;
+      border-radius: 12px;
+      background: #fbf9ff;
+      white-space: nowrap;
+    }
+    .minor-entry .pill { flex: 0 0 auto; }
+    .minor-date { color: var(--muted); font-size: 12px; }
     .full { grid-column: 1 / -1; }
     .note-box { border-left: 4px solid var(--blue); background: #f5f8ff; padding: 12px 14px; border-radius: 12px; color: #344054; font-size: 13px; margin-bottom: 14px; }
     .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
@@ -133,8 +146,8 @@
   <div class="wrap">
     <header>
       <div>
-        <h1>Dashboard ติดตาม CHECO / มคอ.2</h1>
-        <div class="subtitle">จัดกลุ่มหลักตาม <b>เกณฑ์ประเมิน</b> ส่วน <b>วันที่รับทราบ</b> ใช้ตัดสินสถานะรับทราบแล้วหรืออยู่ระหว่างการพิจารณาเท่านั้น</div>
+        <h1>รายงานสถานะการรับทราบหลักสูตร</h1>
+        <div class="subtitle">จัดกลุ่มข้อมูลตาม <b>เกณฑ์ประเมิน</b> และใช้ <b>วันที่รับทราบ</b> เพื่อแยกหลักสูตรที่ได้รับการพิจารณารับทราบจาก สป.อว. แล้วออกจากหลักสูตรที่อยู่ระหว่างการพิจารณา</div>
       </div>
       <div class="top-actions">
         <div class="badge">แหล่งข้อมูล: Google Sheet ผ่าน Apps Script</div>
@@ -153,22 +166,23 @@
       <div><label>วิทยาเขต</label><select id="campusFilter"></select></div>
       <div><label>ระดับการศึกษา</label><select id="levelFilter"></select></div>
       <div><label>สถานะ</label><select id="statusFilter"></select></div>
+      <div><label>นำส่งผ่านเอกสาร/ระบบ</label><select id="submissionFilter"></select></div>
       <div><label>ค้นหาหลักสูตร / รหัส</label><input id="searchBox" placeholder="พิมพ์เพื่อค้นหา" /></div>
     </section>
 
     <section class="kpis">
-      <div class="card success"><div><div class="label">หลักสูตรส่ง มคอ.2 สำเร็จ</div><div class="value" id="kpiSuccess">0</div></div><div class="note">นับ unique หลักสูตร/วิทยาเขต</div></div>
+      <div class="card success"><div><div class="label">หลักสูตรได้รับการพิจารณารับทราบจาก สป.อว. แล้ว</div><div class="value" id="kpiSuccess">0</div></div><div class="note">นับ unique หลักสูตร/วิทยาเขต</div></div>
       <div class="card pending"><div><div class="label">หลักสูตรอยู่ระหว่างพิจารณา</div><div class="value" id="kpiPending">0</div></div><div class="note">นับจาก มคอ.2 ที่ยังไม่มีวันที่รับทราบ</div></div>
-      <div class="card rate"><div><div class="label">อัตราสำเร็จของ มคอ.2</div><div class="value" id="kpiRate">0%</div></div><div class="note">สำเร็จ / มคอ.2 ทั้งหมด</div></div>
-      <div class="card minor"><div><div class="label">รายการปรับปรุงเล็กน้อย</div><div class="value" id="kpiMinorRows">0</div></div><div class="note">นับเป็นจำนวนครั้ง</div></div>
-      <div class="card"><div><div class="label">หลักสูตรที่เคยปรับปรุงเล็กน้อย</div><div class="value" id="kpiMinorCourses">0</div></div><div class="note">นับ unique หลักสูตร/วิทยาเขต</div></div>
+      <div class="card rate"><div><div class="label">อัตราการรับทราบหลักสูตร มคอ.2 จาก สป.อว.</div><div class="value" id="kpiRate">0%</div></div><div class="note">หลักสูตรที่รับทราบแล้ว / มคอ.2 ทั้งหมด</div></div>
+      <div class="card minor"><div><div class="label">รายการปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์</div><div class="value" id="kpiMinorRows">0</div></div><div class="note">นับเป็นจำนวนครั้ง</div></div>
+      <div class="card"><div><div class="label">หลักสูตรที่เคยปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์</div><div class="value" id="kpiMinorCourses">0</div></div><div class="note">นับ unique หลักสูตร/วิทยาเขต</div></div>
     </section>
 
     <section class="grid">
       <div class="panel">
         <h2>ภาพรวมตามเกณฑ์ประเมิน</h2>
         <div id="criteriaChart" class="bar-chart"></div>
-        <div class="legend"><span><i class="dot success"></i>มคอ.2 สำเร็จ</span><span><i class="dot pending"></i>อยู่ระหว่างพิจารณา</span><span><i class="dot minor"></i>ปรับปรุงเล็กน้อย</span></div>
+        <div class="legend"><span><i class="dot success"></i>ได้รับการพิจารณารับทราบจาก สป.อว. แล้ว</span><span><i class="dot pending"></i>อยู่ระหว่างพิจารณา</span><span><i class="dot minor"></i>ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์</span></div>
       </div>
       <div class="panel">
         <h2>ประเภทการดำเนินการ</h2>
@@ -193,7 +207,7 @@
 
     <section class="grid">
       <div class="panel">
-        <h2>หลักสูตรที่มีการปรับปรุงเล็กน้อยมากที่สุด</h2>
+        <h2>รายการปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์</h2>
         <div class="scroll"><table id="minorTable"></table></div>
       </div>
       <div class="panel">
@@ -204,7 +218,7 @@
 
     <section class="panel full">
       <h2>รายละเอียดรายหลักสูตร</h2>
-      <div class="note-box">Key ที่ใช้รวมหลักสูตร: <b>รหัสหลักสูตร + ชื่อหลักสูตร + วิทยาเขต</b>. งาน “ปรับปรุงเล็กน้อย ครั้งที่ …” ไม่นับเป็นส่ง มคอ.2 สำเร็จ แต่แยกเป็นจำนวนครั้งของการปรับแก้</div>
+      <div class="note-box">Key ที่ใช้รวมหลักสูตร: <b>รหัสหลักสูตร + ชื่อหลักสูตร + วิทยาเขต</b>. รายการ “ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์ ครั้งที่ …” แยกนับเป็นจำนวนครั้ง และไม่นำไปรวมกับหลักสูตรที่ได้รับการพิจารณารับทราบจาก สป.อว. แล้ว</div>
       <div class="scroll" style="max-height:620px"><table id="detailTable"></table></div>
     </section>
 
@@ -304,10 +318,22 @@ function normalizeRows(rows) {
     const level = clean(getField(row, ['ระดับการศึกษา', 'level'])) || '-';
     const ackRaw = getField(row, ['วันที่รับทราบ', 'ackDate', 'ack_date']);
     const ackDate = normalizeDateForDisplay(ackRaw);
-    const operation = clean(getField(row, ['ประเภทการดำเนินการ', 'operation']));
+    const operationRaw = clean(getField(row, ['ประเภทการดำเนินการ', 'operation']));
+    const isMinor = operationRaw.startsWith('ปรับปรุงเล็กน้อย');
+    const minorRound = isMinor ? ((operationRaw.match(/ครั้งที่\s*[^/|,;]*/i) || [])[0] || '').trim() : '';
+    const operation = isMinor
+      ? `ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์${minorRound ? ` ${minorRound}` : ''}`
+      : operationRaw;
+    const submissionChannel = clean(getField(row, [
+      'นำส่งผ่านเอกสาร/ ระบบ',
+      'นำส่งผ่านเอกสาร/ระบบ',
+      'นำส่งผ่านเอกสาร / ระบบ',
+      'ช่องทางการนำส่ง',
+      'submissionChannel',
+      'submission_channel'
+    ])) || '-';
     const criteria = clean(getField(row, ['เกณฑ์ประเมิน', 'criteria'])) || 'ไม่ระบุ';
-    const isMinor = operation.startsWith('ปรับปรุงเล็กน้อย');
-    const isTqf2 = TQF2_OPS.has(operation);
+    const isTqf2 = TQF2_OPS.has(operationRaw);
     const ackStatus = isPendingAck(ackRaw) ? 'pending' : 'success';
     const key = [courseCode || trackingCode || `row-${idx+1}`, courseName || '-', campus || '-'].join('|');
 
@@ -323,6 +349,9 @@ function normalizeRows(rows) {
       ackDate,
       ackStatus,
       operation,
+      operationRaw,
+      minorRound,
+      submissionChannel,
       criteria,
       isTqf2,
       isMinor,
@@ -368,7 +397,8 @@ function setupFilters() {
   populateSelect('facultyFilter', unique(records.map(r => r.faculty)).sort(), 'ทุกคณะ');
   populateSelect('campusFilter', unique(records.map(r => r.campus)).sort(), 'ทุกวิทยาเขต');
   populateSelect('levelFilter', unique(records.map(r => r.level)).sort(), 'ทุกระดับ');
-  populateSelect('statusFilter', ['ส่ง มคอ.2 สำเร็จ', 'อยู่ระหว่างพิจารณา', 'ปรับปรุงเล็กน้อย'], 'ทุกสถานะ');
+  populateSelect('statusFilter', ['หลักสูตรได้รับการพิจารณารับทราบจาก สป.อว. แล้ว', 'อยู่ระหว่างพิจารณา', 'ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์'], 'ทุกสถานะ');
+  populateSelect('submissionFilter', unique(records.map(r => r.submissionChannel)).filter(v => v !== '-').sort((a,b) => a.localeCompare(b, 'th')), 'ทุกช่องทางการนำส่ง');
 }
 
 function getFiltered() {
@@ -377,17 +407,19 @@ function getFiltered() {
   const campus = $('campusFilter').value;
   const level = $('levelFilter').value;
   const status = $('statusFilter').value;
+  const submission = $('submissionFilter').value;
   const q = $('searchBox').value.trim().toLowerCase();
   return records.filter(r => {
     const statusOk = !status ||
-      (status === 'ส่ง มคอ.2 สำเร็จ' && r.isTqf2 && r.ackStatus === 'success') ||
+      (status === 'หลักสูตรได้รับการพิจารณารับทราบจาก สป.อว. แล้ว' && r.isTqf2 && r.ackStatus === 'success') ||
       (status === 'อยู่ระหว่างพิจารณา' && r.isTqf2 && r.ackStatus === 'pending') ||
-      (status === 'ปรับปรุงเล็กน้อย' && r.isMinor);
-    const queryText = `${r.courseCode} ${r.trackingCode} ${r.courseName} ${r.faculty} ${r.campus} ${r.operation}`.toLowerCase();
+      (status === 'ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์' && r.isMinor);
+    const queryText = `${r.courseCode} ${r.trackingCode} ${r.courseName} ${r.faculty} ${r.campus} ${r.operation} ${r.submissionChannel}`.toLowerCase();
     return (!c || r.criteria === c) &&
       (!f || r.faculty === f) &&
       (!campus || r.campus === campus) &&
       (!level || r.level === level) &&
+      (!submission || r.submissionChannel === submission) &&
       statusOk &&
       (!q || queryText.includes(q));
   });
@@ -480,7 +512,7 @@ function renderCriteriaTable(arr) {
     .map(([criteria, rs]) => ({ criteria, ...summarize(rs) }))
     .sort((a,b)=>(parseInt(a.criteria)||9999)-(parseInt(b.criteria)||9999));
   $('criteriaTable').innerHTML = `<thead><tr>
-    <th>เกณฑ์</th><th class="num">มคอ.2 สำเร็จ</th><th class="num">ค้าง</th><th class="num">ปรับเล็กน้อย</th><th class="num">รวม</th>
+    <th>เกณฑ์</th><th class="num">รับทราบแล้ว</th><th class="num">อยู่ระหว่างพิจารณา</th><th class="num">สมอ.08 เปลี่ยนอาจารย์</th><th class="num">รวม</th>
   </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
     <td><b>${esc(r.criteria)}</b></td>
     <td class="num">${fmt(r.tqf2SuccessCourses)}</td>
@@ -498,7 +530,7 @@ function renderLevelChart(arr) {
   $('levelChart').innerHTML = groups.length ? groups.map(g => `
     <div class="small-chart-row">
       <div>
-        <div style="font-size:13px"><b>${esc(g.level)}</b> <span class="muted">สำเร็จ ${fmt(g.tqf2SuccessCourses)} · ค้าง ${fmt(g.tqf2PendingCourses)}</span></div>
+        <div style="font-size:13px"><b>${esc(g.level)}</b> <span class="muted">รับทราบแล้ว ${fmt(g.tqf2SuccessCourses)} · อยู่ระหว่างพิจารณา ${fmt(g.tqf2PendingCourses)}</span></div>
         <div class="small-track"><div class="small-fill" style="width:${(g.totalRows/max)*100}%"></div></div>
       </div>
       <div class="num">${fmt(g.totalRows)}</div>
@@ -511,7 +543,7 @@ function renderFacultyTable(arr) {
     .map(([faculty, rs]) => ({ faculty, ...summarize(rs) }))
     .sort((a,b) => b.tqf2PendingCourses - a.tqf2PendingCourses || b.tqf2SuccessCourses - a.tqf2SuccessCourses || a.faculty.localeCompare(b.faculty, 'th'));
   $('facultyTable').innerHTML = `<thead><tr>
-    <th>คณะ</th><th class="num">สำเร็จ</th><th class="num">ค้าง</th><th class="num">ปรับ</th>
+    <th>คณะ</th><th class="num">รับทราบแล้ว</th><th class="num">อยู่ระหว่างพิจารณา</th><th class="num">สมอ.08</th>
   </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
     <td>${esc(r.faculty)}</td>
     <td class="num">${fmt(r.tqf2SuccessCourses)}</td>
@@ -525,6 +557,17 @@ function renderMinorTable(arr) {
   const rows = [...groupBy(minor, courseKey).entries()].map(([key, rs]) => {
     const first = rs[0];
     const criteriaSet = unique(rs.map(r => r.criteria)).join(', ');
+    const events = rs.map((r, index) => {
+      const roundText = r.minorRound || `ครั้งที่ ${index + 1}`;
+      const roundNumber = Number((roundText.match(/\d+/) || [])[0]) || Number.MAX_SAFE_INTEGER;
+      return {
+        roundText,
+        roundNumber,
+        dateText: r.ackDate && r.ackDate !== PENDING_TEXT ? r.ackDate : 'ไม่ระบุวันที่',
+        row: r.row
+      };
+    }).sort((a, b) => a.roundNumber - b.roundNumber || a.row - b.row);
+
     return {
       courseName: first.courseName,
       courseCode: first.courseCode,
@@ -532,31 +575,40 @@ function renderMinorTable(arr) {
       faculty: first.faculty,
       criteria: criteriaSet,
       count: rs.length,
-      operations: unique(rs.map(r => r.operation)).join(' / ')
+      events
     };
   }).sort((a,b) => b.count - a.count || a.courseName.localeCompare(b.courseName, 'th')).slice(0, 40);
 
   $('minorTable').innerHTML = `<thead><tr>
-    <th>หลักสูตร</th><th>คณะ / วิทยาเขต</th><th>เกณฑ์</th><th class="num">จำนวนครั้ง</th>
+    <th>หลักสูตร / ประวัติการปรับปรุง</th><th>คณะ / วิทยาเขต</th><th>เกณฑ์</th><th class="num">จำนวนครั้ง</th>
   </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
-    <td><div class="course">${esc(r.courseName)}</div><div class="muted">${esc(r.courseCode)}</div><div><span class="pill minor">${esc(r.operations)}</span></div></td>
+    <td>
+      <div class="course">${esc(r.courseName)}</div>
+      <div class="muted">${esc(r.courseCode)}</div>
+      <div class="minor-history">${r.events.map(event => `
+        <div class="minor-entry">
+          <span class="pill minor">${esc(event.roundText)}</span>
+          <span class="minor-date">วันที่ ${esc(event.dateText)}</span>
+        </div>`).join('')}</div>
+    </td>
     <td>${esc(r.faculty)}<br><span class="muted">${esc(r.campus)}</span></td>
     <td>${esc(r.criteria)}</td>
     <td class="num"><b>${fmt(r.count)}</b></td>
-  </tr>`).join('') : '<tr><td colspan="4" class="muted">ไม่มีรายการปรับปรุงเล็กน้อย</td></tr>') + '</tbody>';
+  </tr>`).join('') : '<tr><td colspan="4" class="muted">ไม่มีรายการปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์</td></tr>') + '</tbody>';
 }
 
 function renderPendingTable(arr) {
   const rows = arr.filter(r => r.isTqf2 && r.ackStatus === 'pending')
     .sort((a,b) => (a.criteria || '').localeCompare(b.criteria || '', 'th') || a.faculty.localeCompare(b.faculty, 'th') || a.courseName.localeCompare(b.courseName, 'th'));
   $('pendingTable').innerHTML = `<thead><tr>
-    <th>หลักสูตร</th><th>คณะ / วิทยาเขต</th><th>เกณฑ์</th><th>ประเภท</th>
+    <th>หลักสูตร</th><th>คณะ / วิทยาเขต</th><th>เกณฑ์</th><th>ประเภท</th><th>นำส่งผ่านเอกสาร/ระบบ</th>
   </tr></thead><tbody>` + (rows.length ? rows.map(r => `<tr>
     <td><div class="course">${esc(r.courseName)}</div><div class="muted">${esc(r.courseCode)}</div></td>
     <td>${esc(r.faculty)}<br><span class="muted">${esc(r.campus)}</span></td>
     <td>${esc(r.criteria)}</td>
     <td><span class="pill pending">${esc(r.operation)}</span></td>
-  </tr>`).join('') : '<tr><td colspan="4" class="muted">ไม่มีรายการอยู่ระหว่างพิจารณา</td></tr>') + '</tbody>';
+    <td>${esc(r.submissionChannel)}</td>
+  </tr>`).join('') : '<tr><td colspan="5" class="muted">ไม่มีรายการอยู่ระหว่างพิจารณา</td></tr>') + '</tbody>';
 }
 
 function renderDetailTable(arr) {
@@ -566,10 +618,10 @@ function renderDetailTable(arr) {
     a.courseName.localeCompare(b.courseName, 'th')
   );
   $('detailTable').innerHTML = `<thead><tr>
-    <th>เกณฑ์</th><th>หลักสูตร</th><th>คณะ</th><th>วิทยาเขต</th><th>ระดับ</th><th>ประเภท</th><th>วันที่รับทราบ</th><th>สถานะ</th>
+    <th>เกณฑ์</th><th>หลักสูตร</th><th>คณะ</th><th>วิทยาเขต</th><th>ระดับ</th><th>ประเภท</th><th>นำส่งผ่านเอกสาร/ระบบ</th><th>วันที่รับทราบ</th><th>สถานะ</th>
   </tr></thead><tbody>` + (rows.length ? rows.map(r => {
-    const statusPill = r.isMinor ? '<span class="pill minor">ปรับปรุงเล็กน้อย</span>' :
-      (r.isTqf2 && r.ackStatus === 'success' ? '<span class="pill success">มคอ.2 สำเร็จ</span>' :
+    const statusPill = r.isMinor ? '<span class="pill minor">ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์</span>' :
+      (r.isTqf2 && r.ackStatus === 'success' ? '<span class="pill success">ได้รับการพิจารณารับทราบจาก สป.อว. แล้ว</span>' :
       (r.isTqf2 && r.ackStatus === 'pending' ? '<span class="pill pending">อยู่ระหว่างพิจารณา</span>' : '<span class="pill neutral">อื่น ๆ</span>'));
     return `<tr>
       <td>${esc(r.criteria)}</td>
@@ -578,10 +630,11 @@ function renderDetailTable(arr) {
       <td>${esc(r.campus)}</td>
       <td>${esc(r.level)}</td>
       <td>${esc(r.operation)}</td>
+      <td>${esc(r.submissionChannel)}</td>
       <td>${esc(r.ackDate)}</td>
       <td>${statusPill}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" class="muted">ไม่มีข้อมูลตามเงื่อนไขที่เลือก</td></tr>') + '</tbody>';
+  }).join('') : '<tr><td colspan="9" class="muted">ไม่มีข้อมูลตามเงื่อนไขที่เลือก</td></tr>') + '</tbody>';
 }
 
 function render() {
@@ -598,10 +651,10 @@ function render() {
 }
 
 function exportCsv() {
-  const headers = ['เกณฑ์ประเมิน','รหัสหลักสูตร','รหัสติดตาม','ชื่อหลักสูตร','คณะ','วิทยาเขต','ระดับการศึกษา','ประเภทการดำเนินการ','วันที่รับทราบ','สถานะ'];
+  const headers = ['เกณฑ์ประเมิน','รหัสหลักสูตร','รหัสติดตาม','ชื่อหลักสูตร','คณะ','วิทยาเขต','ระดับการศึกษา','ประเภทการดำเนินการ','นำส่งผ่านเอกสาร/ ระบบ','วันที่รับทราบ','สถานะ'];
   const rows = filteredRecords.map(r => [
-    r.criteria, r.courseCode, r.trackingCode, r.courseName, r.faculty, r.campus, r.level, r.operation, r.ackDate,
-    r.isMinor ? 'ปรับปรุงเล็กน้อย' : (r.isTqf2 && r.ackStatus === 'success' ? 'มคอ.2 สำเร็จ' : (r.isTqf2 && r.ackStatus === 'pending' ? 'อยู่ระหว่างพิจารณา' : 'อื่น ๆ'))
+    r.criteria, r.courseCode, r.trackingCode, r.courseName, r.faculty, r.campus, r.level, r.operation, r.submissionChannel, r.ackDate,
+    r.isMinor ? 'ปรับปรุงเล็กน้อย สมอ.08 กรณีเปลี่ยนแปลงอาจารย์' : (r.isTqf2 && r.ackStatus === 'success' ? 'หลักสูตรได้รับการพิจารณารับทราบจาก สป.อว. แล้ว' : (r.isTqf2 && r.ackStatus === 'pending' ? 'อยู่ระหว่างพิจารณา' : 'อื่น ๆ'))
   ]);
   const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -616,7 +669,7 @@ function exportCsv() {
 }
 
 function init() {
-  ['criteriaFilter','facultyFilter','campusFilter','levelFilter','statusFilter'].forEach(id => $(id).addEventListener('change', render));
+  ['criteriaFilter','facultyFilter','campusFilter','levelFilter','statusFilter','submissionFilter'].forEach(id => $(id).addEventListener('change', render));
   $('searchBox').addEventListener('input', render);
   $('refreshBtn').addEventListener('click', loadData);
   $('exportBtn').addEventListener('click', exportCsv);
